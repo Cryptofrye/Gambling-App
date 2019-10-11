@@ -1,15 +1,7 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask_bcrypt import Bcrypt
-from flask_login import LoginManager, login_user, current_user, logout_user, login_required
-from flask import Flask, request
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///GamblingApp.db'
-# Change this - needs to be secret.
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-db = SQLAlchemy(app)
-login_manager = LoginManager(app)
-bcrypt = Bcrypt(app)
+from flask_login import login_user, current_user, logout_user, login_required
+from flask import request
+from server import app, db, bcrypt, login_manager
+import server.models as models
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -67,10 +59,3 @@ def logout():
 @login_required
 def testy():
     return "Aloha logged in user!"
-
-# Imported at the end to avoid circular imports.        
-import models
-
-if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0", port=1337)
-
