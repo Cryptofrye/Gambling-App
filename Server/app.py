@@ -56,6 +56,11 @@ def logout():
             return f"You're not logged in"
     return "403 Method Not Allowed"  
 
+@app.route("/testy", methods=["POST"])
+@login_required
+def testy():
+    return "Aloha logged in user!"
+
         
 
 import models
