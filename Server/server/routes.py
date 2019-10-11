@@ -1,5 +1,5 @@
 from flask_login import login_user, current_user, logout_user, login_required
-from flask import request
+from flask import request, jsonify
 from server import app, db, bcrypt, login_manager
 import server.models as models
 
@@ -54,6 +54,34 @@ def logout():
         else:
             return f"You're not logged in"
     return "403 Method Not Allowed"  
+
+@app.route("/user/<username>/", methods=["GET", "POST"])
+def user(username):
+    # POST will be to update user information
+    # GET will be to retrieve information about said user.
+    user = models.User.query.filter_by(username=username).first()
+    if request.method == "GET":
+        return jsonify(
+            username = user.username,
+            money = user.money,
+            date_registered = user.date_registered
+        )
+    elif request.method == "POST":
+        if current_user == user:
+            old_name = user.username
+            # If the user passes a username in the request
+            if request.form["username"]:
+                if len(request.form["username"]) > 4:
+                    user.username = request.form["username"]
+                    db.session.commit()
+            if request.form["password"]:
+                if len(request.form["password"]) > 6:
+                    user.password = bcrypt.generate_password_hash(request.form["password"]).decode("UTF-8")
+                    db.session.commit()
+            return f"Credentials Updated for {old_name}. Username changed to {request.form['username']}"
+        else:
+            return "403 - Forbidden"
+    
 
 @app.route("/testy", methods=["POST"])
 @login_required
