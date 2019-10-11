@@ -16,7 +16,8 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = models.User(username=username, money=5.00, password=password)
+        hashed_password = bcrypt.generate_password_hash(password).decode("UTF-8")
+        user = models.User(username=username, money=5.00, password=hashed_password)
         db.session.add(user)
         db.session.commit()
         return f"User Inserted - {username} : {password}"

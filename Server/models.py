@@ -7,4 +7,4 @@ class User(app.db.Model):
     password = app.db.Column(app.db.String(80), unique=False, nullable=False)
 
     def __repr__(self):
-        return f"<User {self.username} - £{self.money}"
+        return f"<User {self.username} - £{self.money} - {self.password[0:16]}..."
