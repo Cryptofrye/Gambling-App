@@ -24,7 +24,7 @@ namespace GamblingAppClient
             Console.WriteLine($"Password Was: {password.ToString()}");
 
 
-            var request = (HttpWebRequest)WebRequest.Create("http://139.162.247.115:1337/register");
+            var request = (HttpWebRequest)WebRequest.Create("XXX.XXX.XXX.XXX");
 
             var postData = "username=" + Uri.EscapeDataString("hello");
             postData += "&password=" + Uri.EscapeDataString("world");
