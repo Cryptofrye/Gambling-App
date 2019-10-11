@@ -13,6 +13,7 @@ bcrypt = Bcrypt(app)
 
 @login_manager.user_loader
 def load_user(user_id):
+    """User loader used for flask-login"""
     return models.User.query.get(user_id)
 
 @app.route("/ping")
@@ -22,9 +23,11 @@ def ping():
 @app.route("/register", methods=["POST"])
 def register():
     if request.method == 'POST':
+        # Get username and password from the POST request.
         username = request.form['username']
         password = request.form['password']
         hashed_password = bcrypt.generate_password_hash(password).decode("UTF-8")
+        # Instantiate and add a user object.
         user = models.User(username=username, money=5.00, password=hashed_password)
         db.session.add(user)
         db.session.commit()
@@ -34,11 +37,14 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     if request.method == 'POST':
-        if current_user.is_authenticated:  # if they are already logged in
+        # Check if the user is already logged in.
+        if current_user.is_authenticated:
             return "You're already logged in"
         username = request.form['username']
         password = request.form['password']
         user = models.User.query.filter_by(username=username).first()
+        # If a user exists with the given credentials and if the password
+        # matches with the one stored in the application database.
         if user and bcrypt.check_password_hash(user.password, password):
             login_user(user)
             return f"Successful Login as {username}"
@@ -49,6 +55,7 @@ def login():
 @app.route("/logout", methods=["POST"])
 def logout():
     if request.method == 'POST':
+        # Check to see if the user is currently logged in.
         if current_user.is_authenticated:
             logout_user()
             return f"User logged out successfully"
@@ -61,8 +68,7 @@ def logout():
 def testy():
     return "Aloha logged in user!"
 
-        
-
+# Imported at the end to avoid circular imports.        
 import models
 
 if __name__ == '__main__':
