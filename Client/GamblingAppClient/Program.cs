@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace GamblingAppClient
 {
@@ -21,13 +22,12 @@ namespace GamblingAppClient
             string password = GetPassword();
 
             Console.WriteLine($"\nUsername Was: {username}");
-            Console.WriteLine($"Password Was: {password.ToString()}");
+            Console.WriteLine($"Password Was: {password}");
 
+            var request = (HttpWebRequest)WebRequest.Create($"http://{Constants.serverIP}:{Constants.serverPort}/{Constants.registerUserEndpoint}");
 
-            var request = (HttpWebRequest)WebRequest.Create("XXX.XXX.XXX.XXX");
-
-            var postData = "username=" + Uri.EscapeDataString("hello");
-            postData += "&password=" + Uri.EscapeDataString("world");
+            var postData = "username=" + Uri.EscapeDataString(username);
+            postData += "&password=" + Uri.EscapeDataString(password);
             var data = Encoding.ASCII.GetBytes(postData);
 
             request.Method = "POST";
@@ -74,5 +74,7 @@ namespace GamblingAppClient
             }
             return pwd;
         }
+
+
     }
 }
