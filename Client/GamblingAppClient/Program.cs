@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace GamblingAppClient
@@ -13,6 +10,16 @@ namespace GamblingAppClient
     {
         static void Main(string[] args)
         {
+
+            XmlDocument configXmlDoc = new XmlDocument();
+            configXmlDoc.Load("Config.xml");
+
+            XmlNode config = configXmlDoc.SelectSingleNode("/config");
+
+            string serverIP = config["serverIP"].InnerText;
+            string serverPort = config["serverPort"].InnerText;
+            string userRegistrationEndpoint = config["userRegistrationEndpoint"].InnerText;
+
 
             Console.WriteLine("Base code for gambling game client");
 
@@ -24,7 +31,7 @@ namespace GamblingAppClient
             Console.WriteLine($"\nUsername Was: {username}");
             Console.WriteLine($"Password Was: {password}");
 
-            var request = (HttpWebRequest)WebRequest.Create($"http://{Constants.serverIP}:{Constants.serverPort}/{Constants.registerUserEndpoint}");
+            var request = (HttpWebRequest)WebRequest.Create($"http://{serverIP}:{serverPort}/{userRegistrationEndpoint}");
 
             var postData = "username=" + Uri.EscapeDataString(username);
             postData += "&password=" + Uri.EscapeDataString(password);

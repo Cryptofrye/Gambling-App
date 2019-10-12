@@ -1,4 +1,3 @@
-from datetime import datetime
 from server import db
 from flask_login import UserMixin
 
@@ -7,7 +6,6 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     money = db.Column(db.Float)
     password = db.Column(db.String(80), unique=False, nullable=False)
-    date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def __repr__(self):
         return f"<User {self.username} - £{self.money} - {self.password[0:16]}..."

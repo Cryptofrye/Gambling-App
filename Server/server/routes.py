@@ -83,7 +83,7 @@ def user(username):
             return f"Credentials Updated for {old_name}. Username changed to {request.form['username']}"
         else:
             return abort(403, "You must log in to change your credentials")
-    
+
 
 @routes.route("/testy", methods=["POST"])
 @login_required
