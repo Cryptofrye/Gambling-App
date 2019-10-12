@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<config>
-  <serverIP>XXX.XXX.XXX.XXX</serverIP>
-  <serverPort>1337</serverPort>
-  <userRegistrationEndpoint>/register</userRegistrationEndpoint>
-</config>
