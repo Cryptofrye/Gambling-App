@@ -6,6 +6,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     money = db.Column(db.Float)
     password = db.Column(db.String(80), unique=False, nullable=False)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
-        return f"<User {self.username} - £{self.money} - {self.password[0:16]}..."
+        return f"<User {self.username} - £{self.money} - {self.password[0:16]}... - Admin:{self.is_admin}"

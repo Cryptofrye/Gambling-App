@@ -1,5 +1,5 @@
 from flask_login import login_user, current_user, logout_user, login_required
-from flask import request, jsonify, Blueprint, abort
+from flask import request, jsonify, Blueprint, abort, render_template, url_for, redirect
 from server import app, db, bcrypt, login_manager
 import server.models as models
 
@@ -21,8 +21,11 @@ def register():
         username = request.form['username']
         password = request.form['password']
         hashed_password = bcrypt.generate_password_hash(password).decode("UTF-8")
+        isadmin = False
+        if username.lower() == 'throupy' or username.lower() == 'chadders':
+            isadmin = True
         # Instantiate and add a user object.
-        user = models.User(username=username, money=5.00, password=hashed_password)
+        user = models.User(username=username, money=5.00, password=hashed_password, is_admin=isadmin)
         db.session.add(user)
         db.session.commit()
         return f"User Inserted - {username} : {password}"
@@ -46,16 +49,14 @@ def login():
             return abort(403, "Invalid Credentials")
     return abort(403, "Method not allowed for this endpoint")
 
-@routes.route("/logout", methods=["POST"])
+@routes.route("/logout", methods=["GET", "POST"])
 def logout():
-    if request.method == 'POST':
-        # Check to see if the user is currently logged in.
-        if current_user.is_authenticated:
-            logout_user()
-            return f"User logged out successfully"
-        else:
-            return abort(403, "You're not logged in")
-    return abort(403, "Method not allowed for this endpoint")
+    # Check to see if the user is currently logged in.
+    if current_user.is_authenticated:
+        logout_user()
+        return f"User logged out successfully"
+    else:
+        return abort(403, "You're not logged in")
 
 @routes.route("/user/<username>/", methods=["GET", "POST"])
 def user(username):

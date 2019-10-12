@@ -1,8 +1,8 @@
-from flask import Flask
+from flask import Flask, abort, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
-from flask_login import LoginManager
-from flask_admin import Admin
+from flask_login import LoginManager, current_user
+from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from server.config import Config
 
@@ -10,7 +10,6 @@ from server.config import Config
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
-admin = Admin(name='gambling app', template_mode='bootstrap3')
 app = Flask(__name__)
 
 def create_app():
@@ -21,9 +20,11 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
     from server.models import User
-    admin.init_app(app)
-    admin.add_view(ModelView(User, db.session))
     from server.routes import routes
+    from server.adminsite.admin_routes import AdminLogin, AdminModelView, CustomAdminIndexView
+    admin = Admin(app, name='gambling app', template_mode='bootstrap3', index_view=CustomAdminIndexView())
+    admin.add_view(AdminModelView(User, db.session))
+    admin.add_view(AdminLogin(endpoint="login"))
     app.register_blueprint(routes)
 
     return app
