@@ -1,18 +1,20 @@
 from flask_login import login_user, current_user, logout_user, login_required
-from flask import request, jsonify
+from flask import request, jsonify, Blueprint, abort
 from server import app, db, bcrypt, login_manager
 import server.models as models
+
+routes = Blueprint('routes', __name__)
 
 @login_manager.user_loader
 def load_user(user_id):
     """User loader used for flask-login"""
     return models.User.query.get(user_id)
 
-@app.route("/ping")
+@routes.route("/ping")
 def ping():
     return "Pong"
 
-@app.route("/register", methods=["POST"])
+@routes.route("/register", methods=["POST"])
 def register():
     if request.method == 'POST':
         # Get username and password from the POST request.
@@ -24,9 +26,9 @@ def register():
         db.session.add(user)
         db.session.commit()
         return f"User Inserted - {username} : {password}"
-    return "403 - Method not allowed"
+    return abort(403, "Method not allowed for this endpoint")
 
-@app.route("/login", methods=["POST"])
+@routes.route("/login", methods=["POST"])
 def login():
     if request.method == 'POST':
         # Check if the user is already logged in.
@@ -41,10 +43,10 @@ def login():
             login_user(user)
             return f"Successful Login as {username}"
         else:
-            return f"Invalid Credentials for {username}"
-    return "403 Method Not Allowed"
+            return abort(403, "Invalid Credentials")
+    return abort(403, "Method not allowed for this endpoint")
 
-@app.route("/logout", methods=["POST"])
+@routes.route("/logout", methods=["POST"])
 def logout():
     if request.method == 'POST':
         # Check to see if the user is currently logged in.
@@ -52,10 +54,10 @@ def logout():
             logout_user()
             return f"User logged out successfully"
         else:
-            return f"You're not logged in"
-    return "403 Method Not Allowed"  
+            return abort(403, "You're not logged in")
+    return abort(403, "Method not allowed for this endpoint")
 
-@app.route("/user/<username>/", methods=["GET", "POST"])
+@routes.route("/user/<username>/", methods=["GET", "POST"])
 def user(username):
     # POST will be to update user information
     # GET will be to retrieve information about said user.
@@ -80,10 +82,10 @@ def user(username):
                     db.session.commit()
             return f"Credentials Updated for {old_name}. Username changed to {request.form['username']}"
         else:
-            return "403 - Forbidden"
+            return abort(403, "You must log in to change your credentials")
     
 
-@app.route("/testy", methods=["POST"])
+@routes.route("/testy", methods=["POST"])
 @login_required
 def testy():
     return "Aloha logged in user!"
