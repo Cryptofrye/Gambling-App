@@ -1,8 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Client"
+    "\\Client",
+    "\\Client\\GamblingAppClient",
+    "\\Server",
+    "\\Server\\server"
   ],
-  "SelectedNode": "\\Client\\GamblingAppClient.sln",
   "PreviewInSolutionExplorer": false
 }

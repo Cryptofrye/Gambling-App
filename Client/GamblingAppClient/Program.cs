@@ -3,59 +3,277 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Xml;
+using System.Threading;
+using RestSharp;
 
 namespace GamblingAppClient
 {
     class Program
     {
+
+        static string serverIP = "127.0.0.1"; //Default/Fallback Server IP
+        static int serverPort = 1337; //Default/Fallback Server Port
+
         static void Main(string[] args)
         {
 
-            XmlDocument configXmlDoc = new XmlDocument();
-            configXmlDoc.Load("Config.xml");
+            bool loggedIn = false;
+            RestRequest request;
+            IRestResponse response;
+            CookieContainer cookieContainer = new CookieContainer(); //CookieContainer so that all RestRequests use the same cookies (used for authentication with the server)
 
-            XmlNode config = configXmlDoc.SelectSingleNode("/config");
+            int choice = 0; //Used in menu inputs
 
-            string serverIP = config["serverIP"].InnerText;
-            string serverPort = config["serverPort"].InnerText;
-            string userRegistrationEndpoint = config["userRegistrationEndpoint"].InnerText;
+            getServerInfoFromConfig(); //Gets server IP and port information from the Config.xml file
 
+            /*Console.WriteLine($"Server IP: {serverIP}");
+            Console.WriteLine($"Server Port: {serverPort}");
+            Console.WriteLine("\n[*] Press Enter To Continue...");
+            Console.ReadLine();*/
 
-            Console.WriteLine("Base code for gambling game client");
+            RestClient client = new RestClient($"http://{serverIP}:{serverPort}"); //Creates RestSharp Client That We Can Use To Make Web Requests (Prettier Than HttpWebRequest)
+            client.CookieContainer = cookieContainer; //Sets the RestClient's cookie container to the global one so we can store cookies between requests
 
-            Console.Write("Please Enter Your Username: ");
-            string username = Console.ReadLine();
-            Console.Write("Please Enter Your Password: ");
-            string password = GetPassword();
+            string[] mainMenuText = new string[3] {
+                "[-] 1) Log In",
+                "[-] 2) Register",
+                "[-] 99) Quit"
+            };
 
-            Console.WriteLine($"\nUsername Was: {username}");
-            Console.WriteLine($"Password Was: {password}");
+            string[] loggedInMenuText = new string[3] {
+                "[-] 1) Play Game",
+                "[-] 2) How To Play",
+                "[-] 99) Logout"
+            };
 
-            var request = (HttpWebRequest)WebRequest.Create($"http://{serverIP}:{serverPort}/{userRegistrationEndpoint}");
+            bool running = true; //Used to escape the upper-most while loop (to exit program)
 
-            var postData = "username=" + Uri.EscapeDataString(username);
-            postData += "&password=" + Uri.EscapeDataString(password);
-            var data = Encoding.ASCII.GetBytes(postData);
-
-            request.Method = "POST";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.ContentLength = data.Length;
-
-            using (var stream = request.GetRequestStream())
+            while (!loggedIn && running)
             {
-                stream.Write(data, 0, data.Length);
+                Console.Clear(); //Get a clear canvas :)
+
+                for (int i = 0; i < mainMenuText.Length; i++) //Print main menu
+                {
+                    Console.WriteLine(mainMenuText[i]);
+                }
+
+                Console.Write("\n[*] Choice: ");
+
+                if (!int.TryParse(Console.ReadLine(), out choice))
+                {
+                    Console.WriteLine("\n[!] That Is Not A Number!");
+                    Thread.Sleep(1500);
+                    continue;
+                }
+
+                switch (choice - 1)
+                {
+                    case 0: //Log In
+                        {
+                            Console.Clear();
+
+                            Console.WriteLine("[-] Login");
+                            Console.Write("[*] Please Enter Your Username: ");
+                            string username = Console.ReadLine();
+                            Console.Write("[*] Please Enter Your Password: ");
+                            string password = GetPassword();
+
+                            request = new RestRequest("login"); //Make request to http://<serverIP>:<serverPort>/login
+                            request.AddParameter("username", username); //Adds To POST Or URL Querystring Based On Method
+                            request.AddParameter("password", password);
+
+                            //Add HTTP Headers
+                            request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                            //Execute The Request
+                            response = client.Post(request);
+
+                            if (response.StatusCode == HttpStatusCode.OK)
+                            {
+                                loggedIn = true;
+                                Console.WriteLine("\n\n[i] Logged In Successfully!");
+                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                Console.ReadLine();
+
+                                while (loggedIn)
+                                {
+                                    Console.Clear();
+
+                                    for (int i = 0; i < loggedInMenuText.Length; i++) //Prints logged in menu
+                                    {
+                                        Console.WriteLine(loggedInMenuText[i]);
+                                    }
+
+                                    Console.Write("\n[*] Choice: ");
+
+                                    if (!int.TryParse(Console.ReadLine(), out choice))
+                                    {
+                                        Console.WriteLine("\n[!] That Is Not A Number!");
+                                        Thread.Sleep(1500);
+                                        continue;
+                                    }
+
+                                    switch (choice - 1)
+                                    {
+                                        case 0: //Play game
+                                            //game logic code goes here
+                                            break;
+
+                                        case 1: //How to play
+                                            //print how to play here
+                                            break;
+
+                                        case 98: //Logout
+                                            {
+                                                request = new RestRequest("logout"); //Make request to http://<serverIP>:<serverPort>/logout
+
+                                                //Execute The Request
+                                                response = client.Get(request);
+
+                                                if (response.StatusCode == HttpStatusCode.OK)
+                                                {
+                                                    Console.WriteLine("\n[i] User Logged Out Successfully");
+                                                    Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                    Console.ReadLine();
+                                                    loggedIn = false;
+                                                }
+                                                else if (response.StatusCode == HttpStatusCode.Forbidden) //If user isn't already logged in (this should never get hit, it's just a failsafe)
+                                                {
+                                                    Console.WriteLine("[!] You are somehow not already logged in? Please restart the program.");
+                                                }
+                                                break;
+                                            }
+                                    }
+                                }
+                            }
+
+                            else if (response.StatusCode == HttpStatusCode.Forbidden) //If the provided credentials are wrong
+                            {
+                                Console.WriteLine("\n\n[!] Invalid Credentials. Please Try Again");
+                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                Console.ReadLine();
+                            }
+                            break;
+                        }
+
+                    case 1: //Registering
+                        {
+                            Console.Clear();
+
+                            Console.WriteLine("[-] Registering");
+                            Console.Write("Please Enter Your Username: ");
+                            string username = Console.ReadLine();
+                            Console.Write("Please Enter Your Password: ");
+                            string password = GetPassword();
+
+                            request = new RestRequest("register"); //Make request to http://<serverIP>:<serverPort>/register
+                            request.AddParameter("username", username); //Adds To POST Or URL Querystring Based On Method
+                            request.AddParameter("password", password);
+
+                            //Add HTTP Headers
+                            request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                            //Execute The Request
+                            response = client.Post(request);
+
+                            if (response.StatusCode == HttpStatusCode.OK) //If everything goes smooth and account doesn't already exist in database
+                            {
+                                Console.WriteLine("\n\n[i] Account Created Successfully!");
+                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                Console.ReadLine();
+                            }
+                            else if (response.StatusCode == HttpStatusCode.Forbidden) //If the account username already exists
+                            {
+                                Console.WriteLine("\n\n[!] Error Creating Account! Account Username Probably Already Exists. Try Again.");
+                                Console.WriteLine($"Server Response Code: {response.StatusCode.ToString()}");
+                                Console.WriteLine($"HTML Response: {response.Content}");
+                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                Console.ReadLine();
+                            }
+                            break;
+                        }
+
+                    case 98: //Exit
+                        running = false; //Just exits the while loop to end the program (I could change this to just ``return`` and remove the running bool
+                        break;
+
+                    default:
+                        Console.WriteLine("\n[!] That Is Not A Valid Choice!");
+                        Thread.Sleep(1500);
+                        break;
+                }
+
             }
-
-            var response = (HttpWebResponse)request.GetResponse();
-
-            var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-
-            Console.WriteLine(responseString);
-            Console.ReadLine();
-
         }
 
-        public static string GetPassword()
+        public static void getServerInfoFromConfig() //Sets the serverIP and serverPort variables to the values found in Config.xml
+        {
+            if (File.Exists("Config.xml"))
+            {
+                XmlDocument configXmlDoc = new XmlDocument();
+                configXmlDoc.Load("Config.xml");
+
+                XmlNode config = configXmlDoc.SelectSingleNode("/config");
+
+                serverIP = config["serverIP"].InnerText;
+
+                if (!int.TryParse(config["serverPort"].InnerText, out serverPort))
+                {
+                    Console.WriteLine("[!] Server Port In Config File Appears To Not Be An Integer, Please Fix.");
+                    Console.WriteLine("\n [*] Press Enter To Exit...");
+                    Console.ReadLine();
+                }
+            }
+            else
+            {
+                Console.WriteLine("[!] Config File Doesn't Exist! Creating It For You Mow...");
+
+                XmlWriter xmlWriter = XmlWriter.Create("Config.xml");
+
+                Console.Write("[*] Server IP: ");
+                serverIP = Console.ReadLine();
+
+                while (true)
+                {
+                    Console.Clear();
+
+                    Console.WriteLine("[!] Config File Doesn't Exist! Creating It For You Now...");
+                    Console.WriteLine($"[-] Server IP: {serverIP}");
+
+                    Console.Write("[*] Server Port: ");
+                    string serverPortInput = Console.ReadLine();
+                    if (!int.TryParse(serverPortInput, out serverPort))
+                    {
+                        Console.WriteLine("\n\n[!] That Is Not A Number!");
+                        Thread.Sleep(1500);
+                        continue;
+                    }
+
+                    Console.WriteLine("[!] Config File Doesn't Exist! Creating It For You Now...");
+                    Console.WriteLine($"[-] Server IP: {serverIP}");
+                    Console.WriteLine($"[-] Server Port: {serverPort}");
+
+                    break;
+                }
+
+                xmlWriter.WriteStartDocument();
+
+                xmlWriter.WriteStartElement("config");
+
+                xmlWriter.WriteStartElement("serverIP");
+                xmlWriter.WriteString(serverIP);
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.WriteStartElement("serverPort");
+                xmlWriter.WriteString(serverPort.ToString());
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.WriteEndDocument();
+                xmlWriter.Close();
+            }
+        }
+
+        public static string GetPassword() //Allows Users To Input Their Password And Have The Characters Hidden By Asterkisks For Increased Security
         {
             string pwd = "";
             while (true)
@@ -81,7 +299,5 @@ namespace GamblingAppClient
             }
             return pwd;
         }
-
-
     }
 }
