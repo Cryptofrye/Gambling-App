@@ -21,6 +21,7 @@ namespace GamblingAppClient
             RestRequest request;
             IRestResponse response;
             CookieContainer cookieContainer = new CookieContainer(); //CookieContainer so that all RestRequests use the same cookies (used for authentication with the server)
+            string loggedInUsername = "";
 
             int choice = 0; //Used in menu inputs
 
@@ -40,10 +41,18 @@ namespace GamblingAppClient
                 "[-] 99) Quit"
             };
 
-            string[] loggedInMenuText = new string[3] {
+            string[] loggedInMenuText = new string[4] {
                 "[-] 1) Play Game",
                 "[-] 2) How To Play",
+                "[-] 98) Change Account Details",
                 "[-] 99) Logout"
+            };
+
+            string[] changeAccountDetailsMenuText = new string[4] {
+                "[-] 1) Change Username",
+                "[-] 2) Change Password",
+                "[-] 3) Change Username & Password",
+                "[-] 99) Go Back"
             };
 
             bool running = true; //Used to escape the upper-most while loop (to exit program)
@@ -91,6 +100,7 @@ namespace GamblingAppClient
                             if (response.StatusCode == HttpStatusCode.OK)
                             {
                                 loggedIn = true;
+                                loggedInUsername = username;
                                 Console.WriteLine("\n\n[i] Logged In Successfully!");
                                 Console.WriteLine("\n[*] Press Enter To Continue...");
                                 Console.ReadLine();
@@ -116,12 +126,154 @@ namespace GamblingAppClient
                                     switch (choice - 1)
                                     {
                                         case 0: //Play game
-                                            //game logic code goes here
-                                            break;
+                                            {
+                                                //game logic code goes here
+                                                break;
+                                            }
 
                                         case 1: //How to play
-                                            //print how to play here
-                                            break;
+                                            {
+                                                //print how to play here
+                                                break;
+                                            }
+
+                                        case 97:
+                                            {
+                                                Console.Clear();
+
+                                                for (int i = 0; i < changeAccountDetailsMenuText.Length; i++) //Print main menu
+                                                {
+                                                    Console.WriteLine(changeAccountDetailsMenuText[i]);
+                                                }
+
+                                                Console.Write("\n[*] Choice: ");
+
+                                                if (!int.TryParse(Console.ReadLine(), out choice))
+                                                {
+                                                    Console.WriteLine("\n[!] That Is Not A Number!");
+                                                    Thread.Sleep(1500);
+                                                    continue;
+                                                }
+
+                                                switch (choice - 1)
+                                                {
+                                                    case 0:
+                                                        {
+                                                            Console.Clear();
+
+                                                            Console.WriteLine("[-] Changing Username");
+                                                            Console.Write("[*] Please Enter Your New Username: ");
+                                                            string newUsername = Console.ReadLine();
+
+                                                            request = new RestRequest($"user/{loggedInUsername}/"); //Make request to http://<serverIP>:<serverPort>/user/<loggedInUsername>
+                                                            request.AddParameter("username", newUsername); //Adds To POST Or URL Querystring Based On Method
+
+                                                            //Add HTTP Headers
+                                                            request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                                                            //Execute The Request
+                                                            response = client.Post(request);
+
+                                                            if (response.StatusCode == HttpStatusCode.OK) //If everything goes smooth and account doesn't already exist in database
+                                                            {
+                                                                Console.WriteLine("\n\n[i] Account Details Edited Successfully!");
+                                                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                                Console.ReadLine();
+                                                            }
+                                                            else if (response.StatusCode == HttpStatusCode.Forbidden) //If the account username already exists
+                                                            {
+                                                                Console.WriteLine("\n\n[!] Error Editing Account Details! You May Somehow Not Be Signed In. Please Restart The Program.");
+                                                                Console.WriteLine($"Server Response Code: {response.StatusCode.ToString()}");
+                                                                Console.WriteLine($"HTML Response: {response.Content}");
+                                                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                                Console.ReadLine();
+                                                            }
+                                                            break;
+                                                        }
+
+                                                    case 1:
+                                                        {
+                                                            Console.Clear();
+                                                            Console.WriteLine("[-] Changing Password");
+
+                                                            Console.Write("[*] Please Enter Your New Password: ");
+                                                            string newPassword = GetPassword();
+
+
+                                                            request = new RestRequest($"user/{loggedInUsername}/"); //Make request to http://<serverIP>:<serverPort>/register
+                                                            request.AddParameter("password", newPassword); //Adds To POST Or URL Querystring Based On Method
+
+                                                            //Add HTTP Headers
+                                                            request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                                                            //Execute The Request
+                                                            response = client.Post(request);
+
+                                                            if (response.StatusCode == HttpStatusCode.OK) //If everything goes smooth and account doesn't already exist in database
+                                                            {
+                                                                Console.WriteLine("\n\n[i] Account Details Edited Successfully!");
+                                                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                                Console.ReadLine();
+                                                            }
+                                                            else if (response.StatusCode == HttpStatusCode.Forbidden) //If the account username already exists
+                                                            {
+                                                                Console.WriteLine("\n\n[!] Error Editing Account Details! You May Somehow Not Be Signed In. Please Restart The Program.");
+                                                                Console.WriteLine($"Server Response Code: {response.StatusCode.ToString()}");
+                                                                Console.WriteLine($"HTML Response: {response.Content}");
+                                                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                                Console.ReadLine();
+                                                            }
+                                                            break;
+                                                        }
+
+                                                    case 2:
+                                                        {
+                                                            Console.Clear();
+                                                            Console.WriteLine("[-] Changing Username And Password");
+
+                                                            Console.Write("[*] Please Enter Your New Username: ");
+                                                            string newUsername = Console.ReadLine();
+
+                                                            Console.Write("[*] Please Enter Your New Password: ");
+                                                            string newPassword = GetPassword();
+
+                                                            request = new RestRequest($"user/{loggedInUsername}/"); //Make request to http://<serverIP>:<serverPort>/register
+                                                            request.AddParameter("username", newUsername); //Adds To POST Or URL Querystring Based On Method
+                                                            request.AddParameter("password", newPassword);
+
+                                                            //Add HTTP Headers
+                                                            request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                                                            //Execute The Request
+                                                            response = client.Post(request);
+
+                                                            if (response.StatusCode == HttpStatusCode.OK) //If everything goes smooth and account doesn't already exist in database
+                                                            {
+                                                                Console.WriteLine("\n\n[i] Account Details Edited Successfully!");
+                                                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                                Console.ReadLine();
+                                                            }
+                                                            else if (response.StatusCode == HttpStatusCode.Forbidden) //If the account username already exists
+                                                            {
+                                                                Console.WriteLine("\n\n[!] Error Editing Account Details! You May Somehow Not Be Signed In. Please Restart The Program.");
+                                                                Console.WriteLine($"Server Response Code: {response.StatusCode.ToString()}");
+                                                                Console.WriteLine($"HTML Response: {response.Content}");
+                                                                Console.WriteLine("\n[*] Press Enter To Continue...");
+                                                                Console.ReadLine();
+                                                            }
+                                                            break;
+                                                        }
+                                                    case 3:
+                                                        break;
+
+                                                    default:
+                                                        Console.WriteLine("\n[!] That Is Not A Valid Choice!");
+                                                        Thread.Sleep(1500);
+                                                        break;
+                                                }
+
+                                                break;
+                                            }
 
                                         case 98: //Logout
                                             {
@@ -135,6 +287,7 @@ namespace GamblingAppClient
                                                     Console.WriteLine("\n[i] User Logged Out Successfully");
                                                     Console.WriteLine("\n[*] Press Enter To Continue...");
                                                     Console.ReadLine();
+                                                    loggedInUsername = "";
                                                     loggedIn = false;
                                                 }
                                                 else if (response.StatusCode == HttpStatusCode.Forbidden) //If user isn't already logged in (this should never get hit, it's just a failsafe)
