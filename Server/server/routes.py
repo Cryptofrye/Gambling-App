@@ -1,3 +1,4 @@
+import random
 from flask_login import login_user, current_user, logout_user, login_required
 from flask import request, jsonify, Blueprint, abort, render_template, url_for, redirect
 from server import app, db, bcrypt, login_manager
@@ -18,8 +19,8 @@ def ping():
 def register():
     if request.method == 'POST':
         # Get username and password from the POST request.
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username')
+        password = request.form.get('password')
         hashed_password = bcrypt.generate_password_hash(password).decode("UTF-8")
         isadmin = False
         if username.lower() == 'throupy' or username.lower() == 'chadders':
@@ -37,8 +38,8 @@ def login():
         # Check if the user is already logged in.
         if current_user.is_authenticated:
             return "You're already logged in"
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username')
+        password = request.form.get('password')
         user = models.User.query.filter_by(username=username).first()
         # If a user exists with the given credentials and if the password
         # matches with the one stored in the application database.
@@ -93,6 +94,49 @@ def user(username):
         else:
             return abort(403, "You must log in to change your credentials")
 
+@routes.route("/game/play", methods=["GET", "POST"])
+@login_required
+def play():
+    user = models.User.query.filter_by(username=current_user.username).first()
+    amount = request.form.get("amount")
+    if not amount:
+        return abort(500, "Missing parameter - amount")
+    if not amount.replace(".", "", 1).isdigit() or float(amount) < 0.2 or len(amount.split(" ")) != 1:
+        return abort(500, "Amount parameter must only contain a positive float and must be at least £0.20")
+    if not user.money >= float(amount):
+        return abort(403, "You don't have enough money to perform this action")
+    return game(user, float(amount))
+
+def game(user, amount):
+    # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2]
+    dice = []
+    for x in range(3):
+        dice.append(random.randint(1,6))
+    print(dice)
+    for die in dice:
+        if dice.count(die) == 3:
+            user.money += (amount * 10)
+            db.session.commit()
+            return createGameJsonResponse(dice, True, amount, (amount*10), round(user.money, 1))
+        elif dice.count(die) == 2:
+            user.money += (amount * 5)
+            db.session.commit()
+            return createGameJsonResponse(dice, True, amount, (amount*5), round(user.money, 1))
+    user.money -= amount
+    db.session.commit()
+    return createGameJsonResponse(dice, False, amount, (-amount), round(user.money, 1))
+
+def createGameJsonResponse(dice, wonGame, amount, amountWon, newBalance):
+    return jsonify(
+        dice1 = dice[0],
+        dice2 = dice[1],
+        dice3 = dice[2],
+        wonGame = wonGame,
+        amountBet = amount,
+        amountWon = amountWon,
+        newBalance = newBalance
+    )
+    
 
 @routes.route("/testy", methods=["POST"])
 @login_required
