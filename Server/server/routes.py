@@ -21,6 +21,8 @@ def register():
         # Get username and password from the POST request.
         username = request.form.get('username')
         password = request.form.get('password')
+        if len(username) < 4 or len(password) < 6:
+            return abort(403, "Username must be at least 4 characters, and password must be at least 6.")
         hashed_password = bcrypt.generate_password_hash(password).decode("UTF-8")
         isadmin = False
         if username.lower() == 'throupy' or username.lower() == 'chadders':
