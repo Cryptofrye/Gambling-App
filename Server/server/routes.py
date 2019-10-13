@@ -63,6 +63,8 @@ def user(username):
     # POST will be to update user information
     # GET will be to retrieve information about said user.
     user = models.User.query.filter_by(username=username).first()
+    if not user:
+        return abort(404, "User Doesn't Exist")
     if request.method == "GET":
         return jsonify(
             username = user.username,
@@ -72,16 +74,22 @@ def user(username):
     elif request.method == "POST":
         if current_user == user:
             old_name = user.username
-            # If the user passes a username in the request
-            if request.form["username"]:
-                if len(request.form["username"]) > 4:
+            returnMessage = ""
+            # request.form.get returns None if no parameter is found, rather than raising an error.
+            if not request.form.get("username") and not request.form.get("password"):
+                return abort(500, "Expected a value to change")
+            if request.form.get("username"):
+                # After requst.form.get() I know the username exists, so i can use request.form["username"]
+                if len(request.form["username"]) > 4 and request.form["username"] != user.username:
                     user.username = request.form["username"]
                     db.session.commit()
-            if request.form["password"]:
+                    returnMessage += f"Credentials Updated for {old_name}. Username changed to {request.form['username']}\n"
+            if request.form.get("password"):
                 if len(request.form["password"]) > 6:
                     user.password = bcrypt.generate_password_hash(request.form["password"]).decode("UTF-8")
                     db.session.commit()
-            return f"Credentials Updated for {old_name}. Username changed to {request.form['username']}"
+                    returnMessage += f"Credentials Updated for {old_name}. Password Changed"
+            return returnMessage
         else:
             return abort(403, "You must log in to change your credentials")
 
