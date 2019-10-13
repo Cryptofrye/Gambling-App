@@ -114,13 +114,13 @@ def play():
 def howtoplay():
     return jsonify(
         instructions = """
-        You start with £5 in your bank account\n
-        You can choose how much you bet, the minimum amount you can bet is £0.20\n
-        You roll 3 dice\n 
-        If you get 2 the same, you win your bet with a x5 multiplier\n
-        If you get 3 the same, you win your bet with a x10 multiplier\n
-        Play for as long as you like, or until you go broke!
-        """
+You start with £5 in your bank account\n
+You can choose how much you bet, the minimum amount you can bet is £0.20\n
+You roll 3 dice\n 
+If you get 2 the same, you win your bet with a x5 multiplier\n
+If you get 3 the same, you win your bet with a x10 multiplier\n
+Play for as long as you like, or until you go broke!
+"""
     )
 
 def game(user, amount):
