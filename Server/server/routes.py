@@ -109,8 +109,22 @@ def play():
         return abort(403, "You don't have enough money to perform this action")
     return game(user, float(amount))
 
+
+@routes.route("/howtoplay", methods=["GET"])
+def howtoplay():
+    return jsonify(
+        instructions = """
+        You start with £5 in your bank account\n
+        You can choose how much you bet, the minimum amount you can bet is £0.20\n
+        You roll 3 dice\n 
+        If you get 2 the same, you win your bet with a x5 multiplier\n
+        If you get 3 the same, you win your bet with a x10 multiplier\n
+        Play for as long as you like, or until you go broke!
+        """
+    )
+
 def game(user, amount):
-    # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2]
+    # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2
     dice = []
     for x in range(3):
         dice.append(random.randint(1,6))
@@ -138,9 +152,3 @@ def createGameJsonResponse(dice, wonGame, amount, amountWon, newBalance):
         amountWon = amountWon,
         newBalance = newBalance
     )
-    
-
-@routes.route("/testy", methods=["POST"])
-@login_required
-def testy():
-    return "Aloha logged in user!"
