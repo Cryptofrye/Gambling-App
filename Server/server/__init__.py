@@ -20,11 +20,15 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
     from server.models import User
-    from server.routes import routes
     from server.adminsite.admin_routes import AdminLogin, AdminModelView, CustomAdminIndexView
     admin = Admin(app, name='gambling app', template_mode='bootstrap3', index_view=CustomAdminIndexView())
     admin.add_view(AdminModelView(User, db.session))
     admin.add_view(AdminLogin(endpoint="login"))
-    app.register_blueprint(routes)
+    from server.main.routes import main
+    from server.users.routes import users
+    from server.game.routes import game
+    app.register_blueprint(main)
+    app.register_blueprint(users)
+    app.register_blueprint(game)
 
     return app

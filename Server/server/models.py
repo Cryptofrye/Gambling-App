@@ -1,6 +1,11 @@
 from datetime import datetime
-from server import db
+from server import db, login_manager
 from flask_login import UserMixin
+
+@login_manager.user_loader
+def load_user(user_id):
+    """User loader used for flask-login"""
+    return User.query.get(user_id)
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
