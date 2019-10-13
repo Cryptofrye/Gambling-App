@@ -1,5 +1,6 @@
 from server.forms import AdminLoginForm
 from server.models import User
+from server import bcrypt
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from flask_admin.contrib.sqla import ModelView
 from flask import request, url_for, render_template, abort, redirect, flash
@@ -43,9 +44,7 @@ class AdminLogin(BaseView):
             username = request.form['username']
             password = request.form['password']
             user = User.query.filter_by(username=username).first()
-            # HASH, SALT, CHANGE AND PRIVATIZE THE PASSWORD
-            # THIS IS A FUCKING DUMPSTER FIRE
-            if user and password == "admin":
+            if user and bcrypt.check_password_hash(user.password, password):
                 login_user(user)
                 flash("Logged in", "success")
                 return redirect(url_for("admin.index"))
