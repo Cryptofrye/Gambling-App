@@ -7,5 +7,5 @@ A gambling application made with C# and a python REST API backend.
 - Log in users - user sessions with flask-login (?) ✔️
 - Delete accounts, change passwords (account management) ✔️
 - Admin panel ✔️
-- Rules endpoint
+- Rules endpoint ✔️
 - Other games
