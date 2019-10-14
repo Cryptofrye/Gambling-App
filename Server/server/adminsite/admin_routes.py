@@ -14,7 +14,6 @@ class CustomAdminIndexView(AdminIndexView):
             return True   
 
     def inaccessible_callback(self, name, **kwargs):
-        print("red")
         return redirect(url_for("login.index"))
 
 class AdminModelView(ModelView):

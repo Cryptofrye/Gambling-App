@@ -51,7 +51,7 @@ def logout():
     else:
         return abort(403, "You're not logged in")
 
-@users.route("/users/<username>/", methods=["GET", "POST"])
+@users.route("/users/user/<username>/", methods=["GET", "POST"])
 def user(username):
     # POST will be to update user information
     # GET will be to retrieve information about said user.

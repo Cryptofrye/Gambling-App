@@ -6,39 +6,38 @@ import server.models as models
 
 game = Blueprint('game', __name__)
 
-@game.route("/game/play/", methods=["GET", "POST"])
+@game.route("/game/dice/play/", methods=["POST"])
 @login_required
-def play():
-    user = models.User.query.filter_by(username=current_user.username).first()
+def diceplay():
     amount = request.form.get("amount")
+    user = models.User.query.filter_by(username=current_user.username).first()
+    if ableToPlay(user, amount):
+        return playgame(user, float(amount))
+
+@game.route("/game/dice/howtoplay/", methods=["GET"])
+def howtoplay():
+    return jsonify(
+        instructions = """You start with £5 in your bank account
+You can choose how much you bet, the minimum amount you can bet is £0.20
+You roll 3 dice
+If you get 2 the same, you win your bet with a x5 multiplier
+If you get 3 the same, you win your bet with a x10 multiplier
+Play for as long as you like, or until you go broke!""")
+
+def ableToPlay(user, amount):
     if not amount:
         return abort(500, "Missing parameter - amount")
     if not amount.replace(".", "", 1).isdigit() or float(amount) < 0.2 or len(amount.split(" ")) != 1:
         return abort(500, "Amount parameter must only contain a positive float and must be at least £0.20")
     if not user.money >= float(amount):
         return abort(403, "You don't have enough money to perform this action")
-    return playgame(user, float(amount))
-
-
-@game.route("/game/howtoplay/", methods=["GET"])
-def howtoplay():
-    return jsonify(
-        instructions = """
-You start with £5 in your bank account
-You can choose how much you bet, the minimum amount you can bet is £0.20
-You roll 3 dice
-If you get 2 the same, you win your bet with a x5 multiplier
-If you get 3 the same, you win your bet with a x10 multiplier
-Play for as long as you like, or until you go broke!
-"""
-    )
+    return True
 
 def playgame(user, amount):
     # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2
     dice = []
     for x in range(3):
         dice.append(random.randint(1,6))
-    print(dice)
     for die in dice:
         if dice.count(die) == 3:
             user.money += (amount * 10)
