@@ -23,15 +23,12 @@ def play():
 @game.route("/game/howtoplay/", methods=["GET"])
 def howtoplay():
     return jsonify(
-        instructions = """
-You start with £5 in your bank account
+        instructions = """You start with £5 in your bank account
 You can choose how much you bet, the minimum amount you can bet is £0.20
 You roll 3 dice
 If you get 2 the same, you win your bet with a x5 multiplier
 If you get 3 the same, you win your bet with a x10 multiplier
-Play for as long as you like, or until you go broke!
-"""
-    )
+Play for as long as you like, or until you go broke!""")
 
 def playgame(user, amount):
     # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2
