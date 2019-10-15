@@ -51,6 +51,33 @@ def logout():
     else:
         return abort(403, "You're not logged in")
 
+@users.route("/users/sendmoney/<username>/", methods=["GET", "POST"])
+@login_required
+def sendmoney(username):
+    recipient = models.User.query.filter_by(username=username).first()
+    if not recipient:
+        return abort(404, "User Doesn't Exist")
+    # current_user will be sender because of the login_required decorator
+    sender = models.User.query.filter_by(username=current_user.username).first()
+    amount = request.form.get("amount")
+    if ableToSend(sender, amount):
+        # Send the money
+        recipient.money += float(amount)
+        sender.money -= float(amount)
+        db.session.commit()
+        return f"Sender money is now {sender.money}, recipient money is now {recipient.money}"
+        
+
+def ableToSend(sender, amount):
+    if not amount:
+        return abort(500, "Missing parameter - amount")
+    if not amount.replace(".", "", 1).isdigit() or float(amount) < 0.2 or len(amount.split(" ")) != 1:
+        return abort(500, "Amount parameter must only contain a positive float and must be at least £0.20")
+    if not sender.money >= float(amount):
+        return abort(403, "You don't have enough money to perform this action")
+    return True
+
+
 @users.route("/users/user/<username>/", methods=["GET", "POST"])
 def user(username):
     # POST will be to update user information
