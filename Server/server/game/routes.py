@@ -14,6 +14,12 @@ def diceplay():
     if ableToPlay(user, amount):
         return playgame(user, float(amount))
 
+@game.route("/game/dice/leaderboard/", methods=["GET"])
+def leaderboard():
+    # Perhaps add a way the user can make queries?
+    users = models.User.query.order_by(models.User.money.desc()).all()
+    return jsonify([{'username':user.username,'money':user.money} for user in users])
+
 @game.route("/game/dice/howtoplay/", methods=["GET"])
 def howtoplay():
     return jsonify(
