@@ -8,4 +8,8 @@ A gambling application made with C# and a python REST API backend.
 - Delete accounts, change passwords (account management) ✔️
 - Admin panel ✔️
 - Rules endpoint ✔️
-- Other games
+- Other games (blackjack)
+- Leaderboards
+- Sending Money to other players
+- Chat messaging functionality
+- Make a GUI (winforms, WPF)
