@@ -11,6 +11,5 @@ A gambling application made with C# and a python REST API backend.
 - Other games (blackjack)
 - Leaderboards
 - Sending Money to other players ✔️
-- Chat messaging functionality
 - Fix weird float addition errors
 - Make a GUI (winforms, WPF)
