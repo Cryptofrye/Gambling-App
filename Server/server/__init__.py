@@ -21,11 +21,12 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
-    migrate.init_app(app, db)
-    from server.models import User
+    from server.models import User, DiceGameStats
     from server.adminsite.admin_routes import AdminLogin, AdminModelView, CustomAdminIndexView
+    migrate.init_app(app, db)
     admin = Admin(app, name="Gambling Application Administrator's Panel", template_mode='bootstrap3', index_view=CustomAdminIndexView())
     admin.add_view(AdminModelView(User, db.session))
+    admin.add_view(AdminModelView(DiceGameStats, db.session))
     admin.add_view(AdminLogin(endpoint="login"))
     from server.main.routes import main
     from server.users.routes import users

@@ -41,19 +41,25 @@ def ableToPlay(user, amount):
 
 def playgame(user, amount):
     # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2
+    user.diceGameStats.diceGamePlays += 1
     dice = []
     for x in range(3):
         dice.append(random.randint(1,6))
     for die in dice:
         if dice.count(die) == 3:
             user.money += (amount * 10)
+            user.diceGameStats.totalMoneyEarned += (amount * 10)
+            user.diceGameStats.diceGameWins += 1
             db.session.commit()
             return createGameJsonResponse(dice, True, amount, (amount*10), round(user.money, 1))
         elif dice.count(die) == 2:
             user.money += (amount * 5)
+            user.diceGameStats.totalMoneyEarned += (amount * 5)
+            user.diceGameStats.diceGameWins += 1
             db.session.commit()
             return createGameJsonResponse(dice, True, amount, (amount*5), round(user.money, 1))
     user.money -= amount
+    user.diceGameStats.totalMoneyLost += amount
     db.session.commit()
     return createGameJsonResponse(dice, False, amount, (-amount), round(user.money, 1))
 

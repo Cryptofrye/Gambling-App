@@ -5,6 +5,12 @@ import server.models as models
 
 users = Blueprint('users', __name__)
 
+@users.route("/users/test/")
+def test():
+    x = models.User.query.filter_by(username='Throupy').first()
+    return str(x.diceGameStats.first().totalMoneyEarned)
+
+
 @users.route("/users/register/", methods=["POST"])
 def register():
     if request.method == 'POST':
@@ -19,7 +25,10 @@ def register():
             isadmin = True
         # Instantiate and add a user object.
         user = models.User(username=username, money=5.00, password=hashed_password, is_admin=isadmin)
+        # Dice Game Statistics Child Model
+        diceGameStats = models.DiceGameStats(parentUser=user)
         db.session.add(user)
+        db.session.add(diceGameStats)
         db.session.commit()
         return f"User Inserted - {username} : {password}"
     return abort(403, "Method not allowed for this endpoint")
@@ -89,7 +98,13 @@ def user(username):
         return jsonify(
             username = user.username,
             money = user.money,
-            date_registered = user.date_registered
+            date_registered = user.date_registered,
+            dice_game_stats = [{
+                'dice_game_wins' : user.diceGameStats.diceGameWins,
+                'dice_game_plays' : user.diceGameStats.diceGamePlays,
+                'total_money_earned' : user.diceGameStats.totalMoneyEarned,
+                'total_moeny_lost' : user.diceGameStats.totalMoneyLost
+            }]
         )
     elif request.method == "POST":
         if current_user == user:
