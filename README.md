@@ -10,7 +10,7 @@ A gambling application made with C# and a python REST API backend.
 - Rules endpoint ✔️
 - Other games (blackjack)
 - Leaderboards
-- Sending Money to other players
+- Sending Money to other players ✔️
 - Chat messaging functionality
 - Fix weird float addition errors
 - Make a GUI (winforms, WPF)
