@@ -1,3 +1,5 @@
+import json
+import random
 from datetime import datetime
 from server import db, login_manager
 from flask_login import UserMixin
@@ -13,7 +15,8 @@ class User(db.Model, UserMixin):
     money = db.Column(db.Float)
     password = db.Column(db.String(80), unique=False, nullable=False)
     date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    diceGameStats = db.relationship('DiceGameStats', backref='parentUser', uselist=False)
+    diceGameStats = db.relationship('DiceGameStats', cascade="all,delete", backref='parentUser', uselist=False)
+    blackJackHand = db.relationship('BlackJackHand', cascade="all,delete", backref='player', uselist=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def __repr__(self):
@@ -30,3 +33,20 @@ class DiceGameStats(db.Model, UserMixin):
 
     def __repr__(self):
         return f"DiceGameStats object belonging to user with ID {self.user_id}"
+
+class BlackJackHand(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    cards = db.Column(db.String, nullable=False, default=f"[{random.randint(1,11)},{random.randint(1,11)}]")
+    is_playing = db.Column(db.Boolean, nullable=False, default=False)
+
+    def getCardsAsList(self):
+        return json.loads(self.cards)
+
+    def addToCards(self, number):
+        jsonCards = json.loads(self.cards)
+        jsonCards.append(number)
+        self.cards = json.dumps(jsonCards)
+
+    def resetCards(self):
+        self.cards = f"[{random.randint(1,11)},{random.randint(1,11)}]"
