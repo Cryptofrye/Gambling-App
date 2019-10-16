@@ -7,6 +7,7 @@ using System.Threading;
 using RestSharp;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace GamblingAppClient
 {
@@ -19,6 +20,7 @@ namespace GamblingAppClient
         static CookieContainer cookieContainer = new CookieContainer(); //CookieContainer so that all RestRequests use the same cookies (used for authentication with the server)
         static RestRequest request;
         static IRestResponse response;
+        static JObject jsonObject;
         static string loggedInUsername = "";
         static string registeredAt = "";
         static float balance = 0;
@@ -28,12 +30,15 @@ namespace GamblingAppClient
         static bool running = true; //Used to escape the upper-most while loop (to exit program)
         static bool playingGame = false; //Used to stay inside the inner game menu so you don't have to navigate lots of submenus to keep betting
 
-        static string[] arrQuitResponses = new string[5]
+        static string[] arrQuitResponses = new string[8]
         {
                 "q",
+                "e",
                 "b",
+                "l",
                 "quit",
                 "exit",
+                "back",
                 "leave"
         };
 
@@ -80,7 +85,7 @@ namespace GamblingAppClient
             "[-] 99) Go Back"
         };
 
-        
+
 
         static void Main(string[] args)
         {
@@ -164,7 +169,7 @@ namespace GamblingAppClient
             }
 
             // Parsing JSON content into element-node JObject
-            JObject jsonObject = JObject.Parse(response.Content);
+            jsonObject = JObject.Parse(response.Content);
 
             //Extracting Node element using Getvalue method
             registeredAt = jsonObject.GetValue("date_registered").ToString();
@@ -227,7 +232,24 @@ namespace GamblingAppClient
         {
             Console.Clear();
 
-            Console.WriteLine(String.Format(strGamesMenuText, loggedInUsername, registeredAt, balance)); //This prints the strLoggedInMenuText with our variables in place of the placeholders
+            request = new RestRequest($"users/user/{loggedInUsername}/"); //Make request to http://<serverIP>:<serverPort>/users/user/<loggedInUsername>
+
+            //Execute The Request
+            response = client.Get(request);
+
+            if (response.StatusCode == HttpStatusCode.NotFound) //If user isn't already logged in (this should never get hit, it's just a failsafe)
+            {
+                Console.WriteLine("[!] Can't Get User Information! Account Doesn't Seem To Exist? Please Restart The Program.");
+                return;
+            }
+
+            // Parsing JSON content into element-node JObject
+            jsonObject = JObject.Parse(response.Content);
+
+            //Extracting Node element using Getvalue method
+            balance = jsonObject.GetValue("money").ToObject<float>();
+
+            Console.WriteLine(String.Format(strGamesMenuText, loggedInUsername, registeredAt, balance)); //This prints the strGamesMenuText with our variables in place of the placeholders
 
             Console.Write("\n[*] Choice: ");
 
@@ -269,9 +291,28 @@ namespace GamblingAppClient
 
         public static void diceGameMenuHandler()
         {
+
             Console.Clear();
 
-            Console.WriteLine(String.Format(strDiceGameMenuText, loggedInUsername, registeredAt, balance)); //This prints the strLoggedInMenuText with our variables in place of the placeholders
+            request = new RestRequest($"users/user/{loggedInUsername}/"); //Make request to http://<serverIP>:<serverPort>/users/user/<loggedInUsername>
+
+            //Execute The Request
+            response = client.Get(request);
+
+            if (response.StatusCode == HttpStatusCode.NotFound) //If user isn't already logged in (this should never get hit, it's just a failsafe)
+            {
+                Console.WriteLine("[!] Can't Get User Information! Account Doesn't Seem To Exist? Please Restart The Program.");
+                return;
+            }
+
+            // Parsing JSON content into element-node JObject
+            jsonObject = JObject.Parse(response.Content);
+
+            //Extracting Node element using Getvalue method
+            registeredAt = jsonObject.GetValue("date_registered").ToString();
+            balance = jsonObject.GetValue("money").ToObject<float>();
+
+            Console.WriteLine(String.Format(strDiceGameMenuText, loggedInUsername, registeredAt, balance)); //This prints the strDiceGameMenuText with our variables in place of the placeholders
 
             Console.Write("\n[*] Choice: ");
 
@@ -285,52 +326,133 @@ namespace GamblingAppClient
             switch (choice - 1)
             {
                 case 0: //£0.20 bet
-                    request = new RestRequest("game/dice/play/"); //Make request to http://<serverIP>:<serverPort>/register
-                    request.AddParameter("amount", 0.2); //Adds To POST Or URL Querystring Based On Method
 
-                    //Add HTTP Headers
-                    request.AddHeader("ContentType", "application/x-www-form-urlencoded");
-
-                    //Execute The Request
-                    response = client.Post(request);
-
-                    // Parsing JSON content into element-node JObject
-                    JObject jsonObject = JObject.Parse(response.Content);
-
-                    //Extracting Node element using Getvalue method
-                    int dice1 = jsonObject.GetValue("dice1").ToObject<int>();
-                    int dice2 = jsonObject.GetValue("dice2").ToObject<int>();
-                    int dice3 = jsonObject.GetValue("dice3").ToObject<int>();
-                    bool gameWon = jsonObject.GetValue("wonGame").ToObject<bool>();
-                    float amountWon = jsonObject.GetValue("amountWon").ToObject<float>();
-                    balance = jsonObject.GetValue("newBalance").ToObject<float>();
-
-                    if (gameWon)
+                    while (true)
                     {
-                        Console.WriteLine($"\n[i] You Bet £0.20 And Won £{amountWon}!");
+
+                        Console.Clear();
+
+                        request = new RestRequest($"users/user/{loggedInUsername}/"); //Make request to http://<serverIP>:<serverPort>/users/user/<loggedInUsername>
+
+                        //Execute The Request
+                        response = client.Get(request);
+
+                        if (response.StatusCode == HttpStatusCode.NotFound) //If user isn't already logged in (this should never get hit, it's just a failsafe)
+                        {
+                            Console.WriteLine("[!] Can't Get User Information! Account Doesn't Seem To Exist? Please Restart The Program.");
+                            return;
+                        }
+
+                        // Parsing JSON content into element-node JObject
+                        jsonObject = JObject.Parse(response.Content);
+
+                        //Extracting Node element using Getvalue method
+                        balance = jsonObject.GetValue("money").ToObject<float>();
+
+                        Console.WriteLine(String.Format(strDiceGameMenuText, loggedInUsername, registeredAt, balance)); //This prints the strDiceGameMenuText with our variables in place of the placeholders
+
+                        Console.Write("\n[*] Choice: 1");
+
+                        request = new RestRequest("game/dice/play/"); //Make request to http://<serverIP>:<serverPort>/register
+                        request.AddParameter("amount", 0.2); //Adds To POST Or URL Querystring Based On Method
+
+                        //Add HTTP Headers
+                        request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                        //Execute The Request
+                        response = client.Post(request);
+
+                        // Parsing JSON content into element-node JObject
+                        jsonObject = JObject.Parse(response.Content);
+
+                        //Extracting Node element using Getvalue method
+                        int dice1 = jsonObject.GetValue("dice1").ToObject<int>();
+                        int dice2 = jsonObject.GetValue("dice2").ToObject<int>();
+                        int dice3 = jsonObject.GetValue("dice3").ToObject<int>();
+                        bool gameWon = jsonObject.GetValue("wonGame").ToObject<bool>();
+                        float amountWon = jsonObject.GetValue("amountWon").ToObject<float>();
+                        balance = jsonObject.GetValue("newBalance").ToObject<float>();
+
+                        if (gameWon)
+                            Console.WriteLine($"\n\n[i] You Bet £0.20 And Won £{amountWon}!");
+                        else
+                            Console.WriteLine($"\n\n[i] You Bet £0.20 And Lost!");
+
                         Console.WriteLine($"[i] Dice 1: {dice1}");
                         Console.WriteLine($"[i] Dice 2: {dice2}");
                         Console.WriteLine($"[i] Dice 3: {dice3}");
                         Console.WriteLine($"[i] New Balance: {balance}");
 
-                        Console.WriteLine("\n[*] Press Enter To Continue...");
-                        Console.ReadLine();
-                    }
-                    else
-                    {
-                        Console.WriteLine($"\n[i] You Bet £0.20 And Lost!");
-                        Console.WriteLine($"[i] Dice 1: {dice1}");
-                        Console.WriteLine($"[i] Dice 2: {dice2}");
-                        Console.WriteLine($"[i] Dice 3: {dice3}");
-                        Console.WriteLine($"[i] New Balance: {balance}");
+                        Console.WriteLine("\n[i] Type Quit, Exit, Back Or Leave To Go Back (Q, E, B And L Work Too)");
+                        Console.WriteLine("[*] Or Press Enter To Roll Again...");
+                        if (arrQuitResponses.Any(Console.ReadLine().ToLower().Contains)) break;
 
-                        Console.WriteLine("\n[*] Press Enter To Continue...");
-                        Console.ReadLine();
                     }
 
                     break;
 
                 case 1: //Custom bet
+
+                    while (true)
+                    {
+
+                        Console.Write("\n[*] How Much Do You Want To Bet?: £");
+
+                        if (!float.TryParse(Console.ReadLine(), out float betAmount))
+                        {
+                            Console.WriteLine("\n[!] That Is Not A Number!");
+                            Thread.Sleep(1500);
+                            return;
+                        }
+
+                        if (balance < betAmount)
+                        {
+                            Console.WriteLine($"\n[!] You Do Not Have Enough Money To Bet £{betAmount}. You Have {balance.ToString(CultureInfo.CreateSpecificCulture("en-GB"))}");
+                            continue;
+                        }
+
+                        if (0.2 > betAmount)
+                        {
+                            Console.WriteLine("[!] You Must Make A Minimum Bet Of £0.20!");
+                            continue;
+                        }
+
+                        request = new RestRequest("game/dice/play/"); //Make request to http://<serverIP>:<serverPort>/register
+                        request.AddParameter("amount", betAmount); //Adds To POST Or URL Querystring Based On Method
+
+                        //Add HTTP Headers
+                        request.AddHeader("ContentType", "application/x-www-form-urlencoded");
+
+                        //Execute The Request
+                        response = client.Post(request);
+
+                        // Parsing JSON content into element-node JObject
+                        jsonObject = JObject.Parse(response.Content);
+
+                        //Extracting Node element using Getvalue method
+                        int dice1 = jsonObject.GetValue("dice1").ToObject<int>();
+                        int dice2 = jsonObject.GetValue("dice2").ToObject<int>();
+                        int dice3 = jsonObject.GetValue("dice3").ToObject<int>();
+                        bool gameWon = jsonObject.GetValue("wonGame").ToObject<bool>();
+                        float amountWon = jsonObject.GetValue("amountWon").ToObject<float>();
+                        balance = jsonObject.GetValue("newBalance").ToObject<float>();
+
+                        if (gameWon)
+                            Console.WriteLine($"\n[i] You Bet £{betAmount} And Won £{amountWon}!");
+                        else
+                            Console.WriteLine($"\n[i] You Bet £{betAmount} And Lost!");
+
+                        Console.WriteLine($"[i] Dice 1: {dice1}");
+                        Console.WriteLine($"[i] Dice 2: {dice2}");
+                        Console.WriteLine($"[i] Dice 3: {dice3}");
+                        Console.WriteLine($"[i] New Balance: {balance}");
+
+                        Console.WriteLine("\n[i] Type Quit, Exit, Back Or Leave To Go Back (Q, E, B And L Work Too)");
+                        Console.Write("[*] Or Press Enter To Roll Again...");
+                        if (arrQuitResponses.Any(Console.ReadLine().ToLower().Contains)) break;
+
+                    }
+
                     break;
 
                 case 2:
@@ -360,7 +482,7 @@ namespace GamblingAppClient
             response = client.Get(request);
 
             // Parsing JSON content into element-node JObject
-            JObject jsonObject = JObject.Parse(response.Content);
+            jsonObject = JObject.Parse(response.Content);
 
             //Extracting Node element using Getvalue method
             string instructions = jsonObject.GetValue("instructions").ToString();
@@ -617,10 +739,6 @@ namespace GamblingAppClient
                 Console.ReadLine();
             }
 
-            Console.WriteLine($"Server Response Code: {response.StatusCode.ToString()}");
-            Console.WriteLine($"HTML Response: {response.Content}");
-            Console.WriteLine("\n[*] Press Enter To Continue...");
-            Console.ReadLine();
         }
 
         public static bool login(string username, string password)
@@ -681,7 +799,7 @@ namespace GamblingAppClient
             if (response.StatusCode == HttpStatusCode.OK) //If everything goes smooth and account doesn't already exist in database
             {
                 return true;
-                
+
             }
             else //If we run into an error
             {
