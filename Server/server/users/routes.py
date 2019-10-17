@@ -27,8 +27,9 @@ def register():
         user = models.User(username=username, money=5.00, password=hashed_password, is_admin=isadmin)
         # Dice Game Statistics Child Model
         diceGameStats = models.DiceGameStats(parentUser=user)
+        blackjackGameStats = models.BlackjackGameStats(parentUser=user)
         blackJackHand = models.BlackJackHand(player=user)
-        db.session.add(user);db.session.add(diceGameStats);db.session.add(blackJackHand)
+        db.session.add(user);db.session.add(diceGameStats);db.session.add(blackJackHand);db.session.add(blackjackGameStats)
         db.session.commit()
         return f"User Inserted - {username} : {password}"
     return abort(403, "Method not allowed for this endpoint")

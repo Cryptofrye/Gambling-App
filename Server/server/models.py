@@ -16,6 +16,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(80), unique=False, nullable=False)
     date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     diceGameStats = db.relationship('DiceGameStats', cascade="all,delete", backref='parentUser', uselist=False)
+    blackjackGameStats = db.relationship('BlackjackGameStats', cascade="all,delete", backref='parentUser', uselist=False)
     blackJackHand = db.relationship('BlackJackHand', cascade="all,delete", backref='player', uselist=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -33,6 +34,18 @@ class DiceGameStats(db.Model, UserMixin):
 
     def __repr__(self):
         return f"DiceGameStats object belonging to user with ID {self.user_id}"
+
+class BlackjackGameStats(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    BlackjackWins = db.Column(db.Integer, nullable=False, default=0)
+    BlackjackPlays = db.Column(db.Integer, nullable=False, default=0)
+    totalMoneyEarned = db.Column(db.Float, nullable=False, default=0.0)
+    totalMoneyLost = db.Column(db.Float, nullable=False, default=0.0)
+    # User that the object belongs to
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"BlackjackGameStats object belonging to user with ID {self.user_id}"
 
 class BlackJackHand(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)

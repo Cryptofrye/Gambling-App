@@ -11,7 +11,7 @@ game = Blueprint('game', __name__)
 def diceplay():
     user = models.User.query.filter_by(username=current_user.username).first()
     if ableToPlay(user, request.form.get("amount")):
-        return playgame(user, float(request.form.get("amount")))
+        return diceplaygame(user, float(request.form.get("amount")))
 
 @game.route("/game/dice/leaderboard/", methods=["GET"])
 def leaderboard():
@@ -20,7 +20,7 @@ def leaderboard():
     return jsonify([{'username':user.username,'money':user.money} for user in users])
 
 @game.route("/game/dice/howtoplay/", methods=["GET"])
-def howtoplay():
+def dicehowtoplay():
     return jsonify(
         instructions = """You start with £5 in your bank account
 You can choose how much you bet, the minimum amount you can bet is £0.20
@@ -29,7 +29,7 @@ If you get 2 the same, you win your bet with a x5 multiplier
 If you get 3 the same, you win your bet with a x10 multiplier
 Play for as long as you like, or until you go broke!""")
 
-def playgame(user, amount):
+def diceplaygame(user, amount):
     # Roll 3 dice, if 2 are the same, you get £1, if they're all the same, you get £2
     user.diceGameStats.diceGamePlays += 1
     dice = []
@@ -52,6 +52,17 @@ def playgame(user, amount):
     user.diceGameStats.totalMoneyLost += amount
     db.session.commit()
     return createDiceGameJsonResponse(dice, False, amount, (-amount), round(user.money, 1))
+
+def createDiceGameJsonResponse(dice, wonGame, amount, amountWon, newBalance):
+    return jsonify(
+        dice1 = dice[0],
+        dice2 = dice[1],
+        dice3 = dice[2],
+        wonGame = wonGame,
+        amountBet = amount,
+        amountWon = amountWon,
+        newBalance = newBalance
+    )
 
 # BLACKJACK
 
@@ -77,22 +88,35 @@ def blackjackplayhit():
 @login_required
 def blackjackplaystand():
     if ableToPlay(current_user, request.form.get("amount")):    
+        current_user.blackjackGameStats.BlackjackPlays += 1
+        db.session.commit()
         computerCards = [random.randint(1,11), random.randint(1,11)]
         amount = float(request.form.get("amount"))
         while True:
             # Computer goes bust - Player wins
             if sum(computerCards) > 21:
+                current_user.blackjackGameStats.BlackjackWins += 1
+                current_user.blackjackGameStats.totalMoneyEarned += (amount * 2)
                 current_user.money += (amount * 2)
                 db.session.commit()
                 return createBlackJackGameJsonResponse(True, current_user.blackJackHand.getCardsAsList(), computerCards, amount, (amount * 2))
             # Computers cards value more than the player's - computer wins
             elif sum(computerCards) > sum(current_user.blackJackHand.getCardsAsList()):
+                current_user.blackjackGameStats.totalMoneyLost += amount
                 current_user.money -= amount
                 db.session.commit()
                 return createBlackJackGameJsonResponse(False, current_user.blackJackHand.getCardsAsList(), computerCards, amount, -amount)
             computerCards.append(random.randint(1,11))
         return f"Computer cards : {computerCards}"
 
+@game.route("/game/blackjack/howtoplay/")
+def blackjackhowtoplay():
+    return jsonify(
+        instructions="""You start with 2 cards
+You can hit or stand
+hit meaning you get another card, stand meaning you don't.
+You have to make your total as close to, but not more than 21.
+If you do better than the computer, you double your bet.""")
 
 def createBlackJackGameJsonResponse(wonGame, userCards, computerCards, amountBet, amountWon):
     current_user.blackJackHand.resetCards()
@@ -114,14 +138,3 @@ def ableToPlay(user, amount):
     if not user.money >= float(amount):
         return abort(403, "You don't have enough money to perform this action")
     return True
-
-def createDiceGameJsonResponse(dice, wonGame, amount, amountWon, newBalance):
-    return jsonify(
-        dice1 = dice[0],
-        dice2 = dice[1],
-        dice3 = dice[2],
-        wonGame = wonGame,
-        amountBet = amount,
-        amountWon = amountWon,
-        newBalance = newBalance
-    )
